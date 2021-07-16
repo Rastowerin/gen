@@ -1,77 +1,84 @@
 import time
+from threading import Thread
 from objects import *
 
-for i in range(20):
-    for j in range(10):
-        if i in (0, 19) or j in (0, 9):
-            create_wall(i, j)
+#thread = Thread(target=control)
+#thread.start()
 
-for i in range(4):
+cells = set()
+dead_cells = []
 
-    f = True
-    while f:
-        x, y = r.randint(1, 18), r.randint(1, 8)
-        if m[x][y] == 0:
-            f = False
+matrix = []
+for i in range(weight + 1):
+    matrix.append([])
+    for j in range(height + 1):
+        matrix[i].append(0)
 
-    Cell(x, y)
+generation = 0
 
-food_count = 0
-venom_count = 0
+if load_data is True:
+    generation, cells_data, genotypes = load(matrix)
 
-count = 0
+    for i in range(len(cells_data)):
+        cell = Cell(matrix, cells_data[i][0], cells_data[i][1])
+        cell.set_data(*cells_data[i][3:])
+        cell.set_genotype(0, list(genotypes[i]))
+
+else:
+    clear_db()
+
 while True:
 
-    count += 1
-    print(count)
+    food_array, venom_array, cells_array = arrays_of_random_cords()
 
-    food_count -= deleted_food
-    venom_count -= deleted_venom
-    deleted_food, deleted_venom = 0, 0
+    for i in range(food_number):
+        create_food(matrix, *food_array[i])
 
-    while food_count <= 20:
+    for i in range(venom_number):
+        create_venom(matrix, *venom_array[i])
 
-        f = True
-        while f:
-            x, y = r.randint(1, 18), r.randint(1, 8)
-            if m[x][y] == 0:
-                f = False
+    if generation == 0:
+        for i in range(cells_number):
+            cell = Cell(matrix, *cells_array[i])
+            cell.set_genotype(0, start_genotype)
+            cells.add(Cell(matrix, *cells_array[i]))
 
-        create_food(x, y)
-        food_count += 1
+    turn_count = 0
 
-    while venom_count <= 20:
+    while len(cells):
 
-        f = True
-        while f:
-            x, y = r.randint(1, 18), r.randint(1, 8)
-            if m[x][y] == 0:
-                f = False
-
-        create_venom(x, y)
-        venom_count += 1
-
-    f = False
-    while True:
+        turn_count += 1
 
         for cell in cells.copy():
-            cell.turn()
+            dead = cell.turn()
+
+            if dead:
+                cells.remove(cell)
+                dead_cells.append(cell)
 
             w.update_idletasks()
             w.update()
 
-            time.sleep(0.1)
+            time.sleep(1)
 
-            if len(cells.difference(cells_to_del)) == 1:
-                f = True
-                break
+    dead_cells = dead_cells[::-1]
+    for i in range(cells_number // selection):
+        cells = cells.union(set(dead_cells[i].replicate(selection)))
+    dead_cells.clear()
 
-        cells.difference_update(cells_to_del)
-        cells_to_del.clear()
+    objects_to_del = food_array
+    objects_to_del.extend(venom_array)
 
-        if f:
-            break
+    for i in range(len(objects_to_del)):
+        clear(matrix, *objects_to_del[i])
 
-    for cell in cells.copy():
-        cell.replicate(4)
-        cell.delete()
+    generation += 1
+
+    if generation % 1 == 0:
+        print('generation: ', generation)
+        print('total: ', turn_count, '\n')
+
+    if generation == 100:
+        clear_db()
+        save(matrix, generation)
+        break
