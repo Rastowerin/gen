@@ -1,4 +1,3 @@
-import time
 from threading import Thread
 from objects import *
 
@@ -16,6 +15,7 @@ for i in range(weight + 1):
 
 generation = 0
 
+# TODO переписать
 if load_data is True:
     generation, cells_data, genotypes = load(matrix)
 
@@ -56,14 +56,9 @@ while True:
                 cells.remove(cell)
                 dead_cells.append(cell)
 
-            w.update_idletasks()
-            w.update()
-
-            time.sleep(1)
-
     dead_cells = dead_cells[::-1]
     for i in range(cells_number // selection):
-        cells = cells.union(set(dead_cells[i].replicate(selection)))
+        dead_cells[i].replicate(selection)
     dead_cells.clear()
 
     objects_to_del = food_array

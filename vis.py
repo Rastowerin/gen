@@ -1,6 +1,8 @@
 from tkinter import *
 from config import *
 
+# TODO перейти на PyQt
+
 w = Tk()
 w.geometry('700x400')
 c = Canvas(w, width=1920, height=1080)

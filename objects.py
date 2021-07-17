@@ -2,34 +2,71 @@ import random as r
 from func import *
 
 
-class Cell:
+class Object:
+
+    def __init__(self, matrix, x, y, color, sym):
+        self.__x = x
+        self.__y = y
+        self.__color = color
+        self.__sym = sym
+        self.__matrix = matrix
+
+        matrix.append_object(self)
+
+        c.create_polygon((10 + x * 30, 10 + y * 30), (40 + x * 30, 10 + y * 30), (40 + x * 30, 40 + y * 30),
+                         (10 + x * 30, 40 + y * 30), fill=self.__color, outline='black')
+
+    def __del__(self):
+        c.create_polygon((10 + self.__x * 30, 10 + self.__y * 30), (40 + self.__x * 30, 10 + self.__y * 30),
+                         (40 + self.__x * 30, 40 + self.__y * 30),
+                         (10 + self.__x * 30, 40 + self.__y * 30), fill=self.__color, outline='black')
+
+    def __repr__(self):
+        return self.__sym
+
+    def get_cords(self):
+        return self.__x, self.__y
+
+
+class Food(Object):
 
     def __init__(self, matrix, x, y):
+        super().__init__(matrix, x, y, 'green', 'F')
 
-        self.__p = 0
-        self.__turns = 0
-        self.__direction = random.randint(0, 7)
-        self.__genotype = []
-        self.__health = 10
-        self.__reactions = {'0': 5, '1': 4, '2': 1, '3': 4, 'C': 3}
+
+class Venom(Object):
+
+    def __init__(self, matrix, x, y):
+        super().__init__(matrix, x, y, 'red', 'V')
+
+
+class Wall(Object):
+
+    def __init__(self, matrix, x, y):
+        super().__init__(matrix, x, y, 'grey', 'W')
+
+
+#TODO починить
+class Cell(Object):
+
+    def __init__(self, matrix, x, y, health=10, turns=0, direction=random.randint(0, 7), pointer=0, genotype=[]):
+
+        super().__init__(matrix, x, y, 'blue', 'C')
+        self.__health = health
+        self.__turns = turns
+        self.__direction = direction
+        self.__p = pointer
+        self.__genotype = genotype
+        self.__reactions = {0: 5, 'F': 4, 'V': 1, 'W': 4, 'C': 3}
 
         self.__move_list = [(-1, 1), (0, 1), (1, 1), (1, 0), (1, -1), (0, -1), (-1, -1), (-1, 0)]
         self.__directions_list = [-1, 0, 1, 2, 3, 4, 5, 6]
 
-        for i in range(64):
-            self.__genotype.append(random.randint(0, 63))
+        if self.__genotype is False:
+            for i in range(64):
+                self.__genotype.append(random.randint(0, 63))
 
-        self.__x = x
-        self.__y = y
-        self.matrix = matrix
-        self.matrix[self.__x][self.__y] = self
-        draw_cell(self.__x, self.__y)
-
-    def __repr__(self):
-        return 'C'
-
-    def __die(self):
-        clear(self.matrix, self.__x, self.__y)
+        matrix.append_object(self)
 
     def __mutate(self):
         x = r.randint(0, 3)
@@ -45,20 +82,23 @@ class Cell:
 
     def replicate(self, a):
 
+        # TODO переписать
+
         descendants = []
         for i in range(a):
 
             f = True
+            x, y = 0, 0
             while f:
                 x, y = r.randint(1, weight - 2), r.randint(1, height - 2)
-                if self.matrix[x][y] == 0:
+                if self.__matrix.cords_is_empty(x, y):
                     f = False
 
-            descendants.append(Cell(self.matrix, x, y))
-            self.matrix[x][y].set_genotype(0, self.__genotype.copy())
+            cell = Cell(self.__matrix, x, y)
+            cell.set_genotype(0, self.get_genotype())
 
             if i == 0:
-                self.matrix[x][y].__mutate()
+                cell.__mutate()
 
         return descendants
 
@@ -77,7 +117,7 @@ class Cell:
         dx, dy = self.__move_list[num]
         x, y = (self.__x + dx) % weight, (self.__y + dy) % height
 
-        reaction = self.__reactions[str(self.matrix[x][y])]
+        reaction = self.__reactions[self.__matrix.get_sym(x, y)]
         if self.matrix[x][y] != 2 and self.matrix[x][y] != 3 and str(self.matrix[x][y]) != 'C':
 
             if self.matrix[x][y] == 1:
@@ -117,7 +157,6 @@ class Cell:
 
         self.__health -= 1
         if self.__health <= 0:
-            self.__die()
             return 1
 
         self.__turns += 1
@@ -146,7 +185,6 @@ class Cell:
                 count += 1
 
         if self.__health <= 0:
-            self.__die()
             return 1
 
         return 0
