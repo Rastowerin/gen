@@ -3,6 +3,8 @@ import matrix
 import func
 import config
 
+# test
+
 thread = Thread(target=func.control)
 # thread.start()
 
