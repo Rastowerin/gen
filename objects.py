@@ -1,31 +1,32 @@
-import random as r
-from func import *
+import random
+from config import *
+from vis import *
 
 
 class Object:
 
     def __init__(self, matrix, x, y, color, sym):
-        self.__x = x
-        self.__y = y
-        self.__color = color
-        self.__sym = sym
-        self.__matrix = matrix
+        self._x = x
+        self._y = y
+        self._color = color
+        self._sym = sym
+        self._matrix = matrix
 
-        matrix.append_object(self)
+        self._matrix.append_object(self)
 
         c.create_polygon((10 + x * 30, 10 + y * 30), (40 + x * 30, 10 + y * 30), (40 + x * 30, 40 + y * 30),
-                         (10 + x * 30, 40 + y * 30), fill=self.__color, outline='black')
+                         (10 + x * 30, 40 + y * 30), fill=self._color, outline='black')
 
     def __del__(self):
-        c.create_polygon((10 + self.__x * 30, 10 + self.__y * 30), (40 + self.__x * 30, 10 + self.__y * 30),
-                         (40 + self.__x * 30, 40 + self.__y * 30),
-                         (10 + self.__x * 30, 40 + self.__y * 30), fill=self.__color, outline='black')
+        c.create_polygon((10 + self._x * 30, 10 + self._y * 30), (40 + self._x * 30, 10 + self._y * 30),
+                         (40 + self._x * 30, 40 + self._y * 30),
+                         (10 + self._x * 30, 40 + self._y * 30), fill='white', outline='black')
 
     def __repr__(self):
-        return self.__sym
+        return self._sym
 
     def get_cords(self):
-        return self.__x, self.__y
+        return self._x, self._y
 
 
 class Food(Object):
@@ -46,7 +47,6 @@ class Wall(Object):
         super().__init__(matrix, x, y, 'grey', 'W')
 
 
-#TODO починить
 class Cell(Object):
 
     def __init__(self, matrix, x, y, health=10, turns=0, direction=random.randint(0, 7), pointer=0, genotype=[]):
@@ -57,21 +57,19 @@ class Cell(Object):
         self.__direction = direction
         self.__p = pointer
         self.__genotype = genotype
-        self.__reactions = {0: 5, 'F': 4, 'V': 1, 'W': 4, 'C': 3}
+        self.__reactions = {'N': 5, 'F': 4, 'V': 1, 'W': 4, 'C': 3}
 
         self.__move_list = [(-1, 1), (0, 1), (1, 1), (1, 0), (1, -1), (0, -1), (-1, -1), (-1, 0)]
         self.__directions_list = [-1, 0, 1, 2, 3, 4, 5, 6]
 
-        if self.__genotype is False:
+        if len(self.__genotype) < 64:
             for i in range(64):
                 self.__genotype.append(random.randint(0, 63))
 
-        matrix.append_object(self)
-
     def __mutate(self):
-        x = r.randint(0, 3)
+        x = random.randint(0, 3)
         while x > 0:
-            self.__genotype[r.randint(0, 31)] = r.randint(0, 31)
+            self.__genotype[random.randint(0, 31)] = random.randint(0, 31)
             x -= 1
 
     def set_genotype(self, l, g):
@@ -90,11 +88,11 @@ class Cell(Object):
             f = True
             x, y = 0, 0
             while f:
-                x, y = r.randint(1, weight - 2), r.randint(1, height - 2)
-                if self.__matrix.cords_is_empty(x, y):
+                x, y = random.randint(1, weight - 2), random.randint(1, height - 2)
+                if self._matrix.cords_is_empty(x, y):
                     f = False
 
-            cell = Cell(self.__matrix, x, y)
+            cell = Cell(self._matrix, x, y)
             cell.set_genotype(0, self.get_genotype())
 
             if i == 0:
@@ -106,7 +104,20 @@ class Cell(Object):
         self.__health, self.__turns, self.__direction, self.__p = health, turns, direction, p
 
     def get_data(self):
-        return self.__x, self.__y, self.__health, self.__turns, self.__direction, self.__p
+        return self.__health, self.__turns, self.__direction, self.__p
+
+    def __eat(self, x, y):
+
+        sym = self._matrix.get_sym(x, y)
+        object = self._matrix.get_object(x, y)
+
+        if sym == 'F':
+            self._matrix.delete_object(object)
+            self.__health += 10
+
+        if sym == 'V':
+            self._matrix.delete_object(object)
+            self.__health -= 10
 
     def __go(self, num):
 
@@ -115,43 +126,48 @@ class Cell(Object):
         self.__direction = new_direction
 
         dx, dy = self.__move_list[num]
-        x, y = (self.__x + dx) % weight, (self.__y + dy) % height
+        x, y = (self._x + dx) % weight, (self._y + dy) % height
 
-        reaction = self.__reactions[self.__matrix.get_sym(x, y)]
-        if self.matrix[x][y] != 2 and self.matrix[x][y] != 3 and str(self.matrix[x][y]) != 'C':
+        sym = self._matrix.get_sym(x, y)
 
-            if self.matrix[x][y] == 1:
-                self.__health += 10
+        self.__eat(x, y)
 
-            clear(self.matrix, self.__x, self.__y)
-            self.__x, self.__y = x, y
-            self.matrix[self.__x][self.__y] = self
-            draw_cell(self.__x, self.__y)
+        if sym == 'W' or sym == 'C':
+            return self.__reactions[sym]
 
-        if self.matrix[x][y] == 2:
-            self.__health -= 10
+        c.create_polygon((10 + self._x * 30, 10 + self._y * 30), (40 + self._x * 30, 10 + self._y * 30),
+                         (40 + self._x * 30, 40 + self._y * 30),
+                         (10 + self._x * 30, 40 + self._y * 30), fill='white', outline='black')
 
-        return reaction
+        self._x, self._y = x, y
+
+        c.create_polygon((10 + self._x * 30, 10 + self._y * 30), (40 + self._x * 30, 10 + self._y * 30),
+                         (40 + self._x * 30, 40 + self._y * 30),
+                         (10 + self._x * 30, 40 + self._y * 30), fill='blue', outline='black')
+
+        return self.__reactions[sym]
+
+    def __catch(self, num):
+        dx, dy = self.__move_list[num % 8]
+        x, y = (self._x + dx) % weight, (self._y + dy) % height
+
+        sym = self._matrix.get_sym(x, y)
+        object = self._matrix.get_object(x, y)
+
+        if sym == 'F':
+            self.__eat(x, y)
+
+        if sym == 'V':
+            self._matrix.delete_object(object)
+            Food(self._matrix, x, y)
+
+        return self.__reactions[sym]
 
     def __look(self, num):
         dx, dy = self.__move_list[num % 8]
-        x, y = (self.__x + dx) % weight, (self.__y + dy) % height
+        x, y = (self._x + dx) % weight, (self._y + dy) % height
 
-        return self.__reactions[str(self.matrix[x][y])]
-
-    def __eat(self, num):
-        dx, dy = self.__move_list[num % 8]
-        x, y = (self.__x + dx) % weight, (self.__y + dy) % height
-
-        if self.matrix[x][y] == 1:
-            clear(self.matrix, x, y)
-            self.__health += 10
-
-        if self.matrix[self.__x + dx][self.__y + dy] == 2:
-            clear(self.matrix, self.__x + dx, self.__y + dy)
-            create_food(self.matrix, self.__x + dx, self.__y + dy)
-
-        return self.__reactions[str(self.matrix[x][y])]
+        return self.__reactions[self._matrix.get_sym(x, y)]
 
     def turn(self):
 
@@ -171,7 +187,7 @@ class Cell(Object):
                 break
 
             elif num < 16:
-                res = self.__eat(num)
+                res = self.__catch(num)
                 self.__p = (self.__p + res) % 64
                 break
 
