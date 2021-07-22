@@ -1,18 +1,21 @@
 import random
+
+import func
 from config import *
 from vis import *
 
 
 class Object:
 
-    def __init__(self, matrix, x, y, color, sym):
+    def __init__(self, matrix, x, y, color, sym, active=True):
         self._x = x
         self._y = y
         self._color = color
         self._sym = sym
         self._matrix = matrix
 
-        self._matrix.append_object(self)
+        if active:
+            self.activate()
 
         c.create_polygon((10 + x * 30, 10 + y * 30), (40 + x * 30, 10 + y * 30), (40 + x * 30, 40 + y * 30),
                          (10 + x * 30, 40 + y * 30), fill=self._color, outline='black')
@@ -25,33 +28,36 @@ class Object:
     def __repr__(self):
         return self._sym
 
+    def activate(self):
+        self._matrix.append_object(self)
+
     def get_cords(self):
         return self._x, self._y
 
 
 class Food(Object):
 
-    def __init__(self, matrix, x, y):
-        super().__init__(matrix, x, y, 'green', 'F')
+    def __init__(self, matrix, x, y, active=True):
+        super().__init__(matrix, x, y, 'green', 'F', active)
 
 
 class Venom(Object):
 
-    def __init__(self, matrix, x, y):
-        super().__init__(matrix, x, y, 'red', 'V')
+    def __init__(self, matrix, x, y, active=True):
+        super().__init__(matrix, x, y, 'red', 'V', active)
 
 
 class Wall(Object):
 
-    def __init__(self, matrix, x, y):
-        super().__init__(matrix, x, y, 'grey', 'W')
+    def __init__(self, matrix, x, y, active=True):
+        super().__init__(matrix, x, y, 'grey', 'W', active)
 
 
 class Cell(Object):
 
-    def __init__(self, matrix, x, y, health=10, turns=0, direction=random.randint(0, 7), pointer=0, genotype=[]):
+    def __init__(self, matrix, x, y, health=10, turns=0, direction=random.randint(0, 7), pointer=0, genotype=[], active=True):
 
-        super().__init__(matrix, x, y, 'blue', 'C')
+        super().__init__(matrix, x, y, 'blue', 'C', active)
         self.__health = health
         self.__turns = turns
         self.__direction = direction
@@ -72,39 +78,34 @@ class Cell(Object):
             self.__genotype[random.randint(0, 31)] = random.randint(0, 31)
             x -= 1
 
-    def set_genotype(self, l, g):
+    def set_genotype(self, g, l=0, mutate=False):
         self.__genotype = self.__genotype[:l] + g + self.__genotype[l + len(g):]
+
+        if mutate:
+            self.__mutate()
 
     def get_genotype(self):
         return self.__genotype
 
-    def replicate(self, a):
+    def replicate(self):
 
-        # TODO переписать
-
-        descendants = []
-        for i in range(a):
-
-            f = True
-            x, y = 0, 0
-            while f:
-                x, y = random.randint(1, weight - 2), random.randint(1, height - 2)
-                if self._matrix.cords_is_empty(x, y):
-                    f = False
-
-            cell = Cell(self._matrix, x, y)
-            cell.set_genotype(0, self.get_genotype())
-
-            if i == 0:
-                cell.__mutate()
+        array_of_random_cords = func.arrays_of_random_cords(weight, height, 1, selection)
+        descendants = list(map(lambda data: Cell(self._matrix, *data, active=False), array_of_random_cords))
+        descendants = list(map(lambda cell: cell.set_data(*self.get_data()), descendants))
+        descendants = list(map(lambda cell: cell.set_genotype(self.get_genotype()), descendants[1:])) + \
+                      descendants[0].set_genotype(self.get_genotype(), mutate=True)
 
         return descendants
 
-    def set_data(self, health, turns, direction, p):
-        self.__health, self.__turns, self.__direction, self.__p = health, turns, direction, p
+    def set_data(self, health, turns, direction, pointer):
+        self.__health, self.__turns, self.__direction, self.__p = health, turns, direction, pointer
 
     def get_data(self):
         return self.__health, self.__turns, self.__direction, self.__p
+
+    def __die(self):
+        self._matrix()._dead_cells += 1
+        self._matrix.delete_object(self)
 
     def __eat(self, x, y):
 
@@ -173,7 +174,7 @@ class Cell(Object):
 
         self.__health -= 1
         if self.__health <= 0:
-            return 1
+            self.__die()
 
         self.__turns += 1
 
@@ -201,6 +202,5 @@ class Cell(Object):
                 count += 1
 
         if self.__health <= 0:
-            return 1
+            self.__die()
 
-        return 0

@@ -13,7 +13,8 @@ class Matrix:
         self.__venom = set()
         self.__walls = set()
         self.__cells = set()
-        self.__dead_cells = []
+        self._dead_cells = 0
+        self.__descendants = []
         self.__weight = weight
         self.__height = height
         self.__matrix = []
@@ -78,16 +79,16 @@ class Matrix:
         self.__turns += 1
 
         for cell in self.__cells.copy():
-            dead = cell.turn()
+            cell.turn()
 
-            if dead:
-                self.__cells.remove(cell)
-                self.__dead_cells.append(cell)
+            not_reprodusing_cells = cells_number - cells_number // selection
+            if self._dead_cells >= not_reprodusing_cells:
+                self.__descendants.extend(cell.replicate())
 
-            self.update_visualisation()
+            #self.update_visualisation()
 
     def __clear(self):
-        map(self.delete_object, self.get_all_objects())
+        list(map(self.delete_object, self.get_all_objects()))
 
     def clear_db(self):
         self.__con.clear_db()
@@ -107,7 +108,11 @@ class Matrix:
             self.__dead_cells[i].replicate(selection)
         self.__dead_cells.clear()
 
+        print(len(self.__cells))
+
         self.__clear()
+
+        self.update_visualisation()
 
         if self.__generation % 100 == 0:
             print('generation ', self.__generation, '\n', 'turns:', self.__turns)
