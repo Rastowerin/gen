@@ -17,9 +17,6 @@ class Object:
         if active:
             self.activate()
 
-        c.create_polygon((10 + x * 30, 10 + y * 30), (40 + x * 30, 10 + y * 30), (40 + x * 30, 40 + y * 30),
-                         (10 + x * 30, 40 + y * 30), fill=self._color, outline='black')
-
     def __del__(self):
         c.create_polygon((10 + self._x * 30, 10 + self._y * 30), (40 + self._x * 30, 10 + self._y * 30),
                          (40 + self._x * 30, 40 + self._y * 30),
@@ -27,6 +24,10 @@ class Object:
 
     def __repr__(self):
         return self._sym
+
+    def vis(self):
+        c.create_polygon((10 + self._x * 30, 10 + self._y * 30), (40 + self._x * 30, 10 + self._y * 30), (40 + self._x * 30, 40 + self._y * 30),
+                         (10 + self._x * 30, 40 + self._y * 30), fill=self._color, outline='black')
 
     def activate(self):
         self._matrix.append_object(self)
@@ -72,30 +73,26 @@ class Cell(Object):
             for i in range(64):
                 self.__genotype.append(random.randint(0, 63))
 
-    def __mutate(self):
+    def __mutate(self, genotype):
         x = random.randint(0, 3)
         while x > 0:
-            self.__genotype[random.randint(0, 31)] = random.randint(0, 31)
+            genotype[random.randint(0, 31)] = random.randint(0, 31)
             x -= 1
 
-    def set_genotype(self, g, l=0, mutate=False):
+    def set_genotype(self, g, l=0):
         self.__genotype = self.__genotype[:l] + g + self.__genotype[l + len(g):]
-
-        if mutate:
-            self.__mutate()
 
     def get_genotype(self):
         return self.__genotype
 
-    def replicate(self):
+    def __replicate(self):
 
-        array_of_random_cords = func.arrays_of_random_cords(weight, height, 1, selection)
-        descendants = list(map(lambda data: Cell(self._matrix, *data, active=False), array_of_random_cords))
-        descendants = list(map(lambda cell: cell.set_data(*self.get_data()), descendants))
-        descendants = list(map(lambda cell: cell.set_genotype(self.get_genotype()), descendants[1:])) + \
-                      descendants[0].set_genotype(self.get_genotype(), mutate=True)
+        descendants_genotypes = []
+        for i in range(selection):
+            descendants_genotypes.append(self.get_genotype())
+        self.__mutate(descendants_genotypes[0])
 
-        return descendants
+        return descendants_genotypes
 
     def set_data(self, health, turns, direction, pointer):
         self.__health, self.__turns, self.__direction, self.__p = health, turns, direction, pointer
@@ -104,13 +101,19 @@ class Cell(Object):
         return self.__health, self.__turns, self.__direction, self.__p
 
     def __die(self):
-        self._matrix()._dead_cells += 1
+
+        dead_cells = self._matrix.get_dead_cells()
+        not_reproducing_cells = cells_number - cells_number // selection
+        if dead_cells >= not_reproducing_cells:
+            self._matrix.append_descendants(self.__replicate())
+
+        self._matrix.append_dead_cell()
         self._matrix.delete_object(self)
 
     def __eat(self, x, y):
 
-        sym = self._matrix.get_sym(x, y)
         object = self._matrix.get_object(x, y)
+        sym = str(object)
 
         if sym == 'F':
             self._matrix.delete_object(object)
@@ -129,17 +132,21 @@ class Cell(Object):
         dx, dy = self.__move_list[num]
         x, y = (self._x + dx) % weight, (self._y + dy) % height
 
-        sym = self._matrix.get_sym(x, y)
+        sym = str(self._matrix.get_object(x, y))
 
         self.__eat(x, y)
 
         if sym == 'W' or sym == 'C':
             return self.__reactions[sym]
 
+        if str(self._matrix.get_object(x, y)) != 'N':
+            print('\t', str(self._matrix.get_object(x, y)))
+
         c.create_polygon((10 + self._x * 30, 10 + self._y * 30), (40 + self._x * 30, 10 + self._y * 30),
                          (40 + self._x * 30, 40 + self._y * 30),
                          (10 + self._x * 30, 40 + self._y * 30), fill='white', outline='black')
 
+        self._matrix.swap_cords(self._x, self._y, x, y)
         self._x, self._y = x, y
 
         c.create_polygon((10 + self._x * 30, 10 + self._y * 30), (40 + self._x * 30, 10 + self._y * 30),
@@ -152,8 +159,8 @@ class Cell(Object):
         dx, dy = self.__move_list[num % 8]
         x, y = (self._x + dx) % weight, (self._y + dy) % height
 
-        sym = self._matrix.get_sym(x, y)
         object = self._matrix.get_object(x, y)
+        sym = str(object)
 
         if sym == 'F':
             self.__eat(x, y)
@@ -168,13 +175,17 @@ class Cell(Object):
         dx, dy = self.__move_list[num % 8]
         x, y = (self._x + dx) % weight, (self._y + dy) % height
 
-        return self.__reactions[self._matrix.get_sym(x, y)]
+        return self.__reactions[str(self._matrix.get_object(x, y))]
 
     def turn(self):
+
+        if self._matrix.get_object(*self.get_cords()) != self:
+            print('\t', str(self._matrix.get_object(*self.get_cords())))
 
         self.__health -= 1
         if self.__health <= 0:
             self.__die()
+            return
 
         self.__turns += 1
 
@@ -203,4 +214,3 @@ class Cell(Object):
 
         if self.__health <= 0:
             self.__die()
-

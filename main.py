@@ -3,16 +3,13 @@ import matrix
 import func
 import config
 
-# test
-
 thread = Thread(target=func.control)
 # thread.start()
 
 matrix = matrix.Matrix(config.weight, config.height)
+matrix.set_start_genotype(config.start_genotype)
 
 #matrix.clear_db()
 
-status = True
-while status:
-
-    status = matrix.run_generation()
+while True:
+    matrix.run_generation()
