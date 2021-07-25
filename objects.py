@@ -17,17 +17,18 @@ class Object:
         if active:
             self.activate()
 
-    def __del__(self):
-        c.create_polygon((10 + self._x * 30, 10 + self._y * 30), (40 + self._x * 30, 10 + self._y * 30),
-                         (40 + self._x * 30, 40 + self._y * 30),
-                         (10 + self._x * 30, 40 + self._y * 30), fill='white', outline='black')
+   # def __del__(self):
+
+        # c.create_polygon((10 + self._x * 30, 10 + self._y * 30), (40 + self._x * 30, 10 + self._y * 30),
+        #                  (40 + self._x * 30, 40 + self._y * 30),
+        #                  (10 + self._x * 30, 40 + self._y * 30), fill='white', outline='black')
 
     def __repr__(self):
         return self._sym
 
-    def vis(self):
-        c.create_polygon((10 + self._x * 30, 10 + self._y * 30), (40 + self._x * 30, 10 + self._y * 30), (40 + self._x * 30, 40 + self._y * 30),
-                         (10 + self._x * 30, 40 + self._y * 30), fill=self._color, outline='black')
+    # def vis(self):
+    #     c.create_polygon((10 + self._x * 30, 10 + self._y * 30), (40 + self._x * 30, 10 + self._y * 30), (40 + self._x * 30, 40 + self._y * 30),
+    #                      (10 + self._x * 30, 40 + self._y * 30), fill=self._color, outline='black')
 
     def activate(self):
         self._matrix.append_object(self)
@@ -139,19 +140,16 @@ class Cell(Object):
         if sym == 'W' or sym == 'C':
             return self.__reactions[sym]
 
-        if str(self._matrix.get_object(x, y)) != 'N':
-            print('\t', str(self._matrix.get_object(x, y)))
-
-        c.create_polygon((10 + self._x * 30, 10 + self._y * 30), (40 + self._x * 30, 10 + self._y * 30),
-                         (40 + self._x * 30, 40 + self._y * 30),
-                         (10 + self._x * 30, 40 + self._y * 30), fill='white', outline='black')
+        # c.create_polygon((10 + self._x * 30, 10 + self._y * 30), (40 + self._x * 30, 10 + self._y * 30),
+        #                  (40 + self._x * 30, 40 + self._y * 30),
+        #                  (10 + self._x * 30, 40 + self._y * 30), fill='white', outline='black')
 
         self._matrix.swap_cords(self._x, self._y, x, y)
         self._x, self._y = x, y
 
-        c.create_polygon((10 + self._x * 30, 10 + self._y * 30), (40 + self._x * 30, 10 + self._y * 30),
-                         (40 + self._x * 30, 40 + self._y * 30),
-                         (10 + self._x * 30, 40 + self._y * 30), fill='blue', outline='black')
+        # c.create_polygon((10 + self._x * 30, 10 + self._y * 30), (40 + self._x * 30, 10 + self._y * 30),
+        #                  (40 + self._x * 30, 40 + self._y * 30),
+        #                  (10 + self._x * 30, 40 + self._y * 30), fill='blue', outline='black')
 
         return self.__reactions[sym]
 

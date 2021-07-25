@@ -1,9 +1,10 @@
+import os, psutil
+
 import time
 import connector
 from objects import *
 
-from pprint import *
-
+process = psutil.Process(os.getpid())
 
 class Matrix:
 
@@ -29,10 +30,6 @@ class Matrix:
         self.__con = connector.Connector()
 
     def swap_cords(self, x1, y1, x2, y2):
-
-        #if str(self.get_object(x1, y1)) != 'C':
-         #   print(str(self.get_object(x1, y1)))
-
         self.__matrix[x1][y1], self.__matrix[x2][y2] = self.__matrix[x2][y2], self.__matrix[x1][y1]
 
     def get_all_objects(self):
@@ -58,7 +55,7 @@ class Matrix:
         x, y = object.get_cords()
         self.__matrix[x][y] = object
         self.__objects_dict[str(object)].add(object)
-        object.vis()
+#        object.vis()
 
     def get_dead_cells(self):
         return self.__dead_cells
