@@ -1,10 +1,12 @@
-import os, psutil
+import os
+# , psutil
 
 import time
 import connector
 from objects import *
 
-process = psutil.Process(os.getpid())
+# process = psutil.Process(os.getpid())
+
 
 class Matrix:
 
@@ -83,8 +85,7 @@ class Matrix:
         self.__con.clear_db()
 
     def set_start_genotype(self, genotype):
-        for i in range(cells_number):
-            self.__descendants_genotypes.append(genotype)
+        self.__descendants_genotypes = [genotype for i in range(cells_number)]
 
     def __turn(self):
 
@@ -128,19 +129,20 @@ class Matrix:
 
         time.sleep(0.1)
 
-    def __save(self):
+    def save(self):
         world_data = [self.__generation]
         objects = self.__food.union(self.__venom.union(self.__walls.union(self.__cells)))
+        print(objects)
         self.__con.load_data(world_data, objects)
 
     def load_data(self):
 
         data = self.__con.get_data()
 
-        self.__generation = data['generation']
+        self.__generation = data['generation'][0]
 
         # TODO упростить
-        list(map(lambda object_data: Food(*object_data), data['objects']['food']))
-        list(map(lambda object_data: Venom(*object_data), data['objects']['venom']))
-        list(map(lambda object_data: Wall(*object_data), data['objects']['walls']))
-        list(map(lambda object_data: Cell(*object_data), data['objects']['cells']))
+        list(map(lambda object_data: Food(self, *object_data), data['objects']['food']))
+        list(map(lambda object_data: Venom(self, *object_data), data['objects']['venom']))
+        list(map(lambda object_data: Wall(self, *object_data), data['objects']['wall']))
+        list(map(lambda object_data: Cell(self, *object_data), data['objects']['cell']))

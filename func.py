@@ -24,7 +24,6 @@ def arrays_of_random_cords(weight, height, n, *args):
         arrays.append(array)
 
         ind += 1
-
     return tuple(arrays)
 
 

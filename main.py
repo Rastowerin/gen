@@ -1,5 +1,8 @@
-import os, psutil
-process = psutil.Process(os.getpid())
+import os
+import atexit
+import keyboard
+# , psutil
+# process = psutil.Process(os.getpid())
 
 from threading import Thread
 import matrix
@@ -14,7 +17,10 @@ thread = Thread(target=func.control)
 matrix = matrix.Matrix(config.weight, config.height)
 matrix.set_start_genotype(config.start_genotype)
 
-# matrix.clear_db()
+matrix.load_data()
 
-while True:
+atexit.register(matrix.save)
+
+
+while not keyboard.is_pressed('space'):
     matrix.run_generation()

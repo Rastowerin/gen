@@ -38,7 +38,6 @@ class Connector:
 
         self.__cur.execute("INSERT INTO world_data(generation)"
                            "VALUES({})".format(world_data[0]))
-
         for object in objects:
             self.__load_object(object)
 
@@ -48,12 +47,18 @@ class Connector:
 
         data = {}
 
-        self.__cur.execute("SELECT * FROM TABLE world_data")
-        data['generation'] = self.__cur.fetchone()
+        self.__cur.execute("SELECT * FROM world_data")
+        data['generation'] = self.__cur.fetchall()[-1] # ь?
+        data['objects'] = {}
 
-        object_types = ['food', 'venom', 'walls', 'cells']
+        object_types = ['food', 'venom', 'wall', 'cell']
         for i in range(len(object_types)):
-            self.__cur.execute("SELET * FROM {}_objects".format(object_types[i]))
+
+            self.__cur.execute('select * from {}_objects'.format(object_types[i]))
+            heads = list(map(lambda x: x[0], self.__cur.description))
+
+            self.__cur.execute("SELECT {} FROM {}_objects".format(', '.join(i for i in heads if i != "ID"),
+                                                                  object_types[i]))
             data['objects'][object_types[i]] = self.__cur.fetchall()
 
         return data

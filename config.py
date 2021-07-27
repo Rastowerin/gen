@@ -1,6 +1,6 @@
 load_data = True
 
-settings_pack = 1
+settings_pack = 0
 
 settings_packs = [
     [20, 10, 20, 20, 0, 4, 4],
