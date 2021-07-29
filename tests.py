@@ -1,14 +1,19 @@
-import func
-import os, psutil
+import matrix
+import objects
+import config
 
-sets = [100, 100, 4, 1000, 1000, 0, 64]
-
-process = psutil.Process(os.getpid())
+test_matrix = matrix.Matrix(3, 3)
+test_matrix.set_start_genotype([])
 
 while True:
-    a = process.memory_info().rss
 
-    func.arrays_of_random_cords(*sets)
+    for i in range(3):
+        for j in range(3):
 
-    b = process.memory_info().rss
-    print(b - a)
+            if i == 1 and j == 1:
+                objects.Cell(test_matrix, i, j)
+
+            else:
+                objects.Venom(test_matrix, i, j)
+
+    test_matrix.run_generation(generate=False)

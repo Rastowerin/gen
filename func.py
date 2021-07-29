@@ -5,7 +5,7 @@ from vis import *
 con = sqlite3.connect("db.db")
 cur = con.cursor()
 
-tables_dict = {0: 'food', 1: 'venom', 2: 'wall', 3:     'cell'}
+tables_dict = {0: 'food', 1: 'venom', 2: 'wall', 3: 'cell'}
 
 
 def arrays_of_random_cords(weight, height, n, *args):

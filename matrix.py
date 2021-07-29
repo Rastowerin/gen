@@ -1,16 +1,15 @@
-import os, psutil
-
+import concurrent.futures
 import time
+import func
 import connector
 from objects import *
 
-process = psutil.Process(os.getpid())
 
 class Matrix:
 
     def __init__(self, weight, height):
         self.__generation = 0
-        self.__turns = 0
+        self.__summary_lifetime = 0
         self.__food = set()
         self.__venom = set()
         self.__walls = set()
@@ -41,6 +40,9 @@ class Matrix:
     def get_object(self, x, y):
         return self.__matrix[x][y]
 
+    def get_average_lifetime(self):
+        return self.__summary_lifetime // config.cells_number
+
     def delete_object(self, object):
         x, y = object.get_cords()
         self.__matrix[x][y] = 'N'
@@ -55,13 +57,14 @@ class Matrix:
         x, y = object.get_cords()
         self.__matrix[x][y] = object
         self.__objects_dict[str(object)].add(object)
-#        object.vis()
+        object.vis()
 
     def get_dead_cells(self):
         return self.__dead_cells
 
-    def append_dead_cell(self):
+    def append_dead_cell(self, turns_of_cell):
         self.__dead_cells += 1
+        self.__summary_lifetime += turns_of_cell
 
     def append_descendants(self, array):
         self.__descendants_genotypes.extend(array)
@@ -69,7 +72,8 @@ class Matrix:
     def __generate_objects(self):
 
         food_array, venom_array, walls_array, cells_array = \
-            func.arrays_of_random_cords(weight, height, 4, food_number, venom_number, walls_number, cells_number)
+            func.arrays_of_random_cords(config.weight, config.height, 4, config.food_number, config.venom_number,
+            config.walls_number, config.cells_number)
 
         list(map(lambda object_data: Food(self, *object_data), food_array))
         list(map(lambda object_data: Venom(self, *object_data), venom_array))
@@ -83,29 +87,25 @@ class Matrix:
         self.__con.clear_db()
 
     def set_start_genotype(self, genotype):
-        for i in range(cells_number):
+        for i in range(config.cells_number):
             self.__descendants_genotypes.append(genotype)
 
     def __turn(self):
-
         self.__turns += 1
-
-        a = 0
         for cell in self.__cells.copy():
             cell.turn()
 
-            a += 1
+        # self.update_visualisation()
 
-    def run_generation(self):
+    def run_generation(self, generate=True):
 
-        self.__generate_objects()
+        if generate:
+            self.__generate_objects()
 
         self.__turns = 0
+        self.__summary_lifetime = 0
         self.__generation += 1
         self.__dead_cells = 0
-
-        if self.__generation % 10 == 0:
-            g = self.__descendants_genotypes[0]
 
         ind = 0
         for cell in self.__cells:
@@ -119,7 +119,7 @@ class Matrix:
         self.__clear()
 
         if self.__generation % 1 == 0:
-            print('generation ', self.__generation, '\n', 'turns:', self.__turns)
+            print('generation ', self.__generation, '\n', 'average lifetime: ', self.get_average_lifetime(), '\n', sep='')
 
     def update_visualisation(self):
 
@@ -136,7 +136,6 @@ class Matrix:
     def load_data(self):
 
         data = self.__con.get_data()
-
         self.__generation = data['generation']
 
         # TODO упростить
