@@ -1,4 +1,5 @@
-import concurrent.futures
+import numpy as np
+import matplotlib.pyplot as plt
 import time
 import func
 import connector
@@ -7,29 +8,41 @@ from objects import *
 
 class Matrix:
 
-    def __init__(self, weight, height):
+    def __init__(self, app, width, height):
+
+        self.__app = app
+
         self.__generation = 0
         self.__summary_lifetime = 0
+        self.__generation_is_active = False
         self.__food = set()
         self.__venom = set()
         self.__walls = set()
         self.__cells = set()
         self.__dead_cells = 0
         self.__descendants_genotypes = []
-        self.__weight = weight
+        self.__width = width
         self.__height = height
         self.__matrix = []
-        for i in range(weight + 1):
+        for i in range(width + 1):
             self.__matrix.append([])
             for j in range(height + 1):
                 self.__matrix[i].append('N')
 
+        self.__average_lifetime_array = np.array([])
+
         self.__objects_dict = {'F': self.__food, 'V': self.__venom, 'W': self.__walls, 'C': self.__cells}
+
+        self.set_start_genotype([])
 
         self.__con = connector.Connector()
 
-    def swap_cords(self, x1, y1, x2, y2):
-        self.__matrix[x1][y1], self.__matrix[x2][y2] = self.__matrix[x2][y2], self.__matrix[x1][y1]
+    def change_cords(self, x1, y1, x2, y2):
+
+        object = str(self.__matrix[x1][y1])
+        self.__app.erase_object(x1, y1)
+        self.__app.draw_object(x2, y2, object)
+        self.__matrix[x1][y1], self.__matrix[x2][y2] = 'N', self.__matrix[x1][y1]
 
     def get_all_objects(self):
         return self.__food.union(self.__venom.union(self.__walls.union(self.__cells)))
@@ -47,6 +60,7 @@ class Matrix:
         x, y = object.get_cords()
         self.__matrix[x][y] = 'N'
         self.__objects_dict[str(object)].remove(object)
+        self.__app.erase_object(x, y)
 
     def cords_is_empty(self, x, y):
         if self.__matrix[x][y] == 'N':
@@ -58,6 +72,9 @@ class Matrix:
         self.__matrix[x][y] = object
         self.__objects_dict[str(object)].add(object)
         object.vis()
+
+    def draw_object(self, x, y, sym):
+        self.__app.draw_object(x, y, sym)
 
     def get_dead_cells(self):
         return self.__dead_cells
@@ -72,7 +89,7 @@ class Matrix:
     def __generate_objects(self):
 
         food_array, venom_array, walls_array, cells_array = \
-            func.arrays_of_random_cords(config.weight, config.height, 4, config.food_number, config.venom_number,
+            func.arrays_of_random_cords(config.width, config.height, 4, config.food_number, config.venom_number,
             config.walls_number, config.cells_number)
 
         list(map(lambda object_data: Food(self, *object_data), food_array))
@@ -90,14 +107,9 @@ class Matrix:
         for i in range(config.cells_number):
             self.__descendants_genotypes.append(genotype)
 
-    def __turn(self):
-        self.__turns += 1
-        for cell in self.__cells.copy():
-            cell.turn()
+    def start_generation(self, generate=True):
 
-        # self.update_visualisation()
-
-    def run_generation(self, generate=True):
+        self.__generation_is_active = True
 
         if generate:
             self.__generate_objects()
@@ -113,20 +125,38 @@ class Matrix:
             ind += 1
         self.__descendants_genotypes.clear()
 
-        while len(self.__cells) > 0:
-            self.__turn()
+    def __turn(self):
+        self.__turns += 1
+        for cell in self.__cells.copy():
+            cell.turn()
+
+        if len(self.__cells) == 0:
+            self.__end_generation()
+
+    def __end_generation(self):
+
+        self.__generation_is_active = False
+
+        self.__average_lifetime_array = np.append(self.__average_lifetime_array, self.get_average_lifetime())
 
         self.__clear()
 
         if self.__generation % 1 == 0:
-            print('generation ', self.__generation, '\n', 'average lifetime: ', self.get_average_lifetime(), '\n', sep='')
+            self.__app.print_generation_info(self.__generation, self.get_average_lifetime())
 
-    def update_visualisation(self):
+        if self.__generation % 100 == 0:
 
-        w.update_idletasks()
-        w.update()
+            array = func.average_array(self.__average_lifetime_array, config.average_range)
+            plt.plot(range(1, self.__generation + 1), array)
+            plt.savefig('plot3.png')
+            fig, _ = plt.subplots()
+            fig.clear()
 
-        time.sleep(0.1)
+    def run(self):
+        if self.__generation_is_active:
+            self.__turn()
+        else:
+            self.start_generation()
 
     def __save(self):
         world_data = [self.__generation]

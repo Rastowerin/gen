@@ -8,10 +8,10 @@ cur = con.cursor()
 tables_dict = {0: 'food', 1: 'venom', 2: 'wall', 3: 'cell'}
 
 
-def arrays_of_random_cords(weight, height, n, *args):
+def arrays_of_random_cords(width, height, n, *args):
 
-    d = max(weight, height)
-    array_of_cords = range(weight * height)
+    d = max(width, height)
+    array_of_cords = range(width * height)
     array_of_cords = set(map(lambda x: (x % d, x // d), array_of_cords))
 
     ind = 0
@@ -26,6 +26,30 @@ def arrays_of_random_cords(weight, height, n, *args):
         ind += 1
 
     return tuple(arrays)
+
+
+def average_array(array, k):
+
+    sum, num = 0, 0
+    result_array = []
+
+    for i in range(min(len(array), k)):
+        sum += array[i]
+        num += 1
+
+    for i in range(len(array)):
+
+        if i - k > 0:
+            sum -= array[i - k - 1]
+            num -= 1
+
+        if i + k < len(array):
+            sum += array[i + k]
+            num += 1
+
+        result_array.append(sum // num)
+
+    return result_array
 
 
 def control():

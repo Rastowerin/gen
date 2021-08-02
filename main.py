@@ -1,12 +1,9 @@
-from threading import Thread
+from PyQt5 import QtWidgets
+import sys
 import matrix
-import func
 import config
+import app
 
-matrix = matrix.Matrix(config.weight, config.height)
-# matrix.set_start_genotype(config.start_genotype)
-
-matrix.set_start_genotype(config.start_genotype)
-
-while True:
-    matrix.run_generation()
+application = QtWidgets.QApplication([])
+window = app.Window()
+sys.exit(application.exec())

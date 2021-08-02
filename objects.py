@@ -1,6 +1,5 @@
 import random
 import config
-from vis import *
 
 
 class Object:
@@ -15,18 +14,11 @@ class Object:
         if active:
             self.activate()
 
-    # def __del__(self):
-    #
-    #     c.create_polygon((10 + self._x * 30, 10 + self._y * 30), (40 + self._x * 30, 10 + self._y * 30),
-    #                      (40 + self._x * 30, 40 + self._y * 30),
-    #                      (10 + self._x * 30, 40 + self._y * 30), fill='white', outline='black')
-
     def __repr__(self):
         return self._sym
 
-    # def vis(self):
-    #     c.create_polygon((10 + self._x * 30, 10 + self._y * 30), (40 + self._x * 30, 10 + self._y * 30), (40 + self._x * 30, 40 + self._y * 30),
-    #                      (10 + self._x * 30, 40 + self._y * 30), fill=self._color, outline='black')
+    def vis(self):
+        self._matrix.draw_object(self._x, self._y, self._sym)
 
     def activate(self):
         self._matrix.append_object(self)
@@ -73,10 +65,7 @@ class Cell(Object):
                 self.__genotype.append(random.randint(0, 63))
 
     def __mutate(self, genotype):
-        x = random.randint(1, 10)
-        while x > 0:
-            genotype[random.randint(0, 63)] = random.randint(0, 63)
-            x -= 1
+        genotype[random.randint(0, 63)] = random.randint(0, 63)
 
     def __replicate(self):
 
@@ -121,7 +110,7 @@ class Cell(Object):
 
         if sym == 'F':
             self._matrix.delete_object(object)
-            self.__health += 10
+            self.__health = max(self.__health + 10, 100)
 
         if sym == 'V':
             self._matrix.delete_object(object)
@@ -134,7 +123,7 @@ class Cell(Object):
         self.__direction = new_direction
 
         dx, dy = self.__move_list[num]
-        x, y = (self._x + dx) % config.weight, (self._y + dy) % config.height
+        x, y = (self._x + dx) % config.width, (self._y + dy) % config.height
 
         sym = str(self._matrix.get_object(x, y))
 
@@ -143,22 +132,17 @@ class Cell(Object):
         if sym == 'W' or sym == 'C':
             return self.__reactions[sym]
 
-        # c.create_polygon((10 + self._x * 30, 10 + self._y * 30), (40 + self._x * 30, 10 + self._y * 30),
-        #                  (40 + self._x * 30, 40 + self._y * 30),
-        #                  (10 + self._x * 30, 40 + self._y * 30), fill='white', outline='black')
+        if str(self._matrix.get_object(x, y)) != 'N':
+            raise ValueError
 
-        self._matrix.swap_cords(self._x, self._y, x, y)
+        self._matrix.change_cords(self._x, self._y, x, y)
         self._x, self._y = x, y
-
-        # c.create_polygon((10 + self._x * 30, 10 + self._y * 30), (40 + self._x * 30, 10 + self._y * 30),
-        #                  (40 + self._x * 30, 40 + self._y * 30),
-        #                  (10 + self._x * 30, 40 + self._y * 30), fill='blue', outline='black')
 
         return self.__reactions[sym]
 
     def __catch(self, num):
         dx, dy = self.__move_list[num % 8]
-        x, y = (self._x + dx) % config.weight, (self._y + dy) % config.height
+        x, y = (self._x + dx) % config.width, (self._y + dy) % config.height
 
         object = self._matrix.get_object(x, y)
         sym = str(object)
@@ -174,7 +158,7 @@ class Cell(Object):
 
     def __look(self, num):
         dx, dy = self.__move_list[num % 8]
-        x, y = (self._x + dx) % config.weight, (self._y + dy) % config.height
+        x, y = (self._x + dx) % config.width, (self._y + dy) % config.height
 
         return self.__reactions[str(self._matrix.get_object(x, y))]
 
@@ -212,3 +196,4 @@ class Cell(Object):
 
         if self.__health <= 0:
             self.__die()
+
