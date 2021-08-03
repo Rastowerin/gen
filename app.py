@@ -74,7 +74,10 @@ class Window(QtWidgets.QMainWindow):
         self.__settings.show()
 
     def change_average_range(self):
-        user_settings.average_range = int(self.__ui.AverageInput.text())
+        try:
+            user_settings.average_range = int(self.__ui.AverageInput.text())
+        except ValueError:
+            pass
 
     def change_speed(self, speed):
         self.__speed = 990 - 10 * speed
