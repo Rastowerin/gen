@@ -1,5 +1,5 @@
 import random
-import config
+import user_settings
 
 
 class Object:
@@ -70,10 +70,10 @@ class Cell(Object):
     def __replicate(self):
 
         descendants_genotypes = []
-        for i in range(config.selection):
+        for i in range(user_settings.selection):
             descendants_genotypes.append(self.get_genotype())
 
-        for i in range(config.mutants_per_cell):
+        for i in range(user_settings.mutants_per_cell):
             self.__mutate(descendants_genotypes[i])
 
         return descendants_genotypes
@@ -96,7 +96,7 @@ class Cell(Object):
     def __die(self):
 
         dead_cells = self._matrix.get_dead_cells()
-        not_reproducing_cells = config.cells_number - config.cells_number // config.selection
+        not_reproducing_cells = user_settings.cells_number - user_settings.cells_number // user_settings.selection
         if dead_cells >= not_reproducing_cells:
             self._matrix.append_descendants(self.__replicate())
 
@@ -123,7 +123,7 @@ class Cell(Object):
         self.__direction = new_direction
 
         dx, dy = self.__move_list[num]
-        x, y = (self._x + dx) % config.width, (self._y + dy) % config.height
+        x, y = (self._x + dx) % user_settings.width, (self._y + dy) % user_settings.height
 
         sym = str(self._matrix.get_object(x, y))
 
@@ -142,7 +142,7 @@ class Cell(Object):
 
     def __catch(self, num):
         dx, dy = self.__move_list[num % 8]
-        x, y = (self._x + dx) % config.width, (self._y + dy) % config.height
+        x, y = (self._x + dx) % user_settings.width, (self._y + dy) % user_settings.height
 
         object = self._matrix.get_object(x, y)
         sym = str(object)
@@ -158,7 +158,7 @@ class Cell(Object):
 
     def __look(self, num):
         dx, dy = self.__move_list[num % 8]
-        x, y = (self._x + dx) % config.width, (self._y + dy) % config.height
+        x, y = (self._x + dx) % user_settings.width, (self._y + dy) % user_settings.height
 
         return self.__reactions[str(self._matrix.get_object(x, y))]
 

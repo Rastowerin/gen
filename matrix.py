@@ -54,7 +54,7 @@ class Matrix:
         return self.__matrix[x][y]
 
     def get_average_lifetime(self):
-        return self.__summary_lifetime // config.cells_number
+        return self.__summary_lifetime // user_settings.cells_number
 
     def delete_object(self, object):
         x, y = object.get_cords()
@@ -89,8 +89,8 @@ class Matrix:
     def __generate_objects(self):
 
         food_array, venom_array, walls_array, cells_array = \
-            func.arrays_of_random_cords(config.width, config.height, 4, config.food_number, config.venom_number,
-            config.walls_number, config.cells_number)
+            func.arrays_of_random_cords(user_settings.width, user_settings.height, 4, user_settings.food_number, user_settings.venom_number,
+            user_settings.walls_number, user_settings.cells_number)
 
         list(map(lambda object_data: Food(self, *object_data), food_array))
         list(map(lambda object_data: Venom(self, *object_data), venom_array))
@@ -104,7 +104,7 @@ class Matrix:
         self.__con.clear_db()
 
     def set_start_genotype(self, genotype):
-        for i in range(config.cells_number):
+        for i in range(user_settings.cells_number):
             self.__descendants_genotypes.append(genotype)
 
     def start_generation(self, generate=True):
@@ -141,16 +141,10 @@ class Matrix:
 
         self.__clear()
 
-        if self.__generation % 1 == 0:
-            self.__app.print_generation_info(self.__generation, self.get_average_lifetime())
+        self.__app.print_generation_info(self.__generation, self.get_average_lifetime())
 
-        if self.__generation % 100 == 0:
-
-            array = func.average_array(self.__average_lifetime_array, config.average_range)
-            plt.plot(range(1, self.__generation + 1), array)
-            plt.savefig('plot3.png')
-            fig, _ = plt.subplots()
-            fig.clear()
+        array = func.average_array(self.__average_lifetime_array, user_settings.average_range)
+        self.__app.set_plot(range(1, self.__generation + 1), array)
 
     def run(self):
         if self.__generation_is_active:

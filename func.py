@@ -1,6 +1,5 @@
 import random
 import sqlite3
-from vis import *
 
 con = sqlite3.connect("db.db")
 cur = con.cursor()
