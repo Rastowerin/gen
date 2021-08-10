@@ -48,6 +48,10 @@ class UiMainWindow(object):
         self.AverageInput.setText(str(user_settings.average_range))
         self.AverageInput.setValidator(QtGui.QIntValidator(1, 1000))
 
+        self.SaveButton = QtWidgets.QPushButton(MainWindow)
+        self.SaveButton.setStyleSheet('background-color: white;')
+        self.SaveButton.setText('save')
+
         self.menubar = QtWidgets.QMenuBar(MainWindow)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 1920, 20))
         self.menubar.setObjectName('menubar')

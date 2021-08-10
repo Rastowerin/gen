@@ -114,6 +114,12 @@ class Matrix:
         if generate:
             self.__generate_objects()
 
+        """if (self.__generation + 1) % 5 == 0:
+            try:
+                self.__con.load_data([self.__generation, self.__summary_lifetime], self.__cells)
+            except Exception as e:
+                print(e)"""
+
         self.__turns = 0
         self.__summary_lifetime = 0
         self.__generation += 1
@@ -123,6 +129,7 @@ class Matrix:
         for cell in self.__cells:
             cell.set_genotype(self.__descendants_genotypes[ind])
             ind += 1
+
         self.__descendants_genotypes.clear()
 
     def __turn(self):
@@ -152,10 +159,12 @@ class Matrix:
         else:
             self.start_generation()
 
-    def __save(self):
-        world_data = [self.__generation]
+    def save(self):
         objects = self.__food.union(self.__venom.union(self.__walls.union(self.__cells)))
-        self.__con.load_data(world_data, objects)
+        try:
+            self.__con.load_data([self.__generation, self.__summary_lifetime], objects)
+        except Exception as e:
+            print(e)
 
     def load_data(self):
 
@@ -163,7 +172,7 @@ class Matrix:
         self.__generation = data['generation']
 
         # TODO упростить
-        list(map(lambda object_data: Food(*object_data), data['objects']['food']))
-        list(map(lambda object_data: Venom(*object_data), data['objects']['venom']))
-        list(map(lambda object_data: Wall(*object_data), data['objects']['walls']))
-        list(map(lambda object_data: Cell(*object_data), data['objects']['cells']))
+        list(map(lambda object_data: Food(self, *object_data), data['objects']['food']))
+        list(map(lambda object_data: Venom(self, *object_data), data['objects']['venom']))
+        list(map(lambda object_data: Wall(self, *object_data), data['objects']['wall']))
+        list(map(lambda object_data: Cell(self, *object_data), data['objects']['cell']))

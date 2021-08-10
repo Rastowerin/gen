@@ -1,4 +1,4 @@
-settings_pack = 2
+settings_pack = 0
 
 settings_packs = [
     [20, 10, 20, 20, 20, 4, 30, 100, 1, 1, 100],

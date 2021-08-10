@@ -1,6 +1,7 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 import main_window
 import settings_window
+from start_window import UiStartWindow
 import matrix
 import user_settings
 
@@ -46,7 +47,15 @@ class Window(QtWidgets.QMainWindow):
         self.__ui.SettingsButton.clicked.connect(self.open_settings_window)
         self.__ui.AverageInput.textChanged.connect(self.change_average_range)
 
+        self.__ui.SaveButton.clicked.connect(self.__matrix.save)
+
         self.show()
+        self.start_window = UiStartWindow(self)
+        self.start_window.show()
+
+    def load_data(self):
+        self.__matrix.load_data()
+        self.start_window.close()
 
     def resizeEvent(self, event):
 
@@ -63,6 +72,9 @@ class Window(QtWidgets.QMainWindow):
         self.__ui.StartButton.setGeometry(QtCore.QRect(0.02 * width, 560 / 600 * height, 0.95 * width, 1 / 30 * height))
         self.__ui.SettingsButton.setGeometry(QtCore.QRect(0.16 * width, 401 / 600 * height, 0.1 * width, 1 / 20 * height))
         self.__ui.AverageInput.setGeometry(QtCore.QRect(0.16 * width, 441 / 600 * height, 0.1 * width, 1 / 30 * height))
+
+        self.__ui.SaveButton.setGeometry(QtCore.QRect(0.16 * width, 470 / 600 * height, 0.1 * width, 1 / 20 * height))
+
         self.__ui.pltCanvas.move(0.27 * width, 6 / 10 * height)
         self.__ui.pltCanvas.resize(0.7 * width, 19 / 60 * height)
         self.__ui.pltCanvas.draw()
